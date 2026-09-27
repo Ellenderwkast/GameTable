@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MatchStatus {
+  WAITING
+  RUNNING
+  FINISHED
+  CANCELLED
+}
+
+model Tenant {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  plan      String       @default("FREE_TRIAL")
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  devices   Device[]
+  matches   Match[]
+  players   Player[]
+  settings  TenantSettings?
+}
+
+model TenantSettings {
+  id          String @id @default(cuid())
+  tenantId    String @unique
+  primaryHex  String @default("#f4b942")
+  logoUrl     String?
+  displayName String?
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  tokenHash  String   @unique
+  lastSeenAt DateTime?
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  matches    Match[]
+  @@index([tenantId])
+}
+
+model Player {
+  id        String        @id @default(cuid())
+  tenantId  String
+  nickname  String
+  createdAt DateTime      @default(now())
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  matches   MatchPlayer[]
+  @@index([tenantId, nickname])
+}
+
+model Match {
+  id         String        @id @default(cuid())
+  tenantId   String
+  deviceId   String?
+  code       String        @unique
+  gameKey    String        @default("burger-rush")
+  status     MatchStatus   @default(WAITING)
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime      @default(now())
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  device     Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  players    MatchPlayer[]
+  @@index([tenantId, status])
+}
+
+model MatchPlayer {
+  id       String   @id @default(cuid())
+  matchId  String
+  playerId String
+  seat     Int
+  score    Int      @default(0)
+  joinedAt DateTime @default(now())
+  match    Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  @@unique([matchId, playerId])
+  @@unique([matchId, seat])
+}
