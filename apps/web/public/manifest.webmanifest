@@ -1,0 +1,9 @@
+{
+  "name": "GameTable Controller",
+  "short_name": "GameTable",
+  "start_url": "/?mode=controller",
+  "display": "standalone",
+  "background_color": "#171b18",
+  "theme_color": "#f4b942",
+  "description": "Control móvil para las partidas GameTable"
+}

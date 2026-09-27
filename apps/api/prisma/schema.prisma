@@ -19,6 +19,12 @@ enum MatchStatus {
   CANCELLED
 }
 
+enum UserRole {
+  OWNER
+  MANAGER
+  OPERATOR
+}
+
 model Tenant {
   id        String       @id @default(cuid())
   name      String
@@ -30,6 +36,8 @@ model Tenant {
   matches   Match[]
   players   Player[]
   settings  TenantSettings?
+  users     User[]
+  scoreEvents ScoreEvent[]
 }
 
 model TenantSettings {
@@ -53,6 +61,19 @@ model Device {
   @@index([tenantId])
 }
 
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  name         String
+  role         UserRole @default(OPERATOR)
+  createdAt    DateTime @default(now())
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@unique([tenantId, email])
+  @@index([email])
+}
+
 model Player {
   id        String        @id @default(cuid())
   tenantId  String
@@ -60,6 +81,7 @@ model Player {
   createdAt DateTime      @default(now())
   tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   matches   MatchPlayer[]
+  scoreEvents ScoreEvent[]
   @@index([tenantId, nickname])
 }
 
@@ -76,6 +98,7 @@ model Match {
   tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   device     Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
   players    MatchPlayer[]
+  scoreEvents ScoreEvent[]
   @@index([tenantId, status])
 }
 
@@ -90,4 +113,19 @@ model MatchPlayer {
   player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   @@unique([matchId, playerId])
   @@unique([matchId, seat])
+}
+
+model ScoreEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  matchId   String
+  playerId  String
+  points    Int
+  reason    String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  @@index([tenantId, createdAt])
+  @@index([tenantId, playerId, createdAt])
 }
