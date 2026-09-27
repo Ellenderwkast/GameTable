@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 
-export type GameAction = 'LEFT' | 'RIGHT' | 'JUMP' | 'ATTACK';
+type GameAction = 'LEFT' | 'RIGHT' | 'JUMP' | 'ATTACK';
 
-export function createBurgerRushGame(container: HTMLElement, onAction: (playerId: string, action: GameAction) => void) {
+export function createBurgerRushGame(container: HTMLElement) {
   class ArenaScene extends Phaser.Scene {
     private players = new Map<string, Phaser.GameObjects.Rectangle>();
+    private ingredient?: Phaser.GameObjects.Arc;
     private elapsed = 0;
 
     constructor() { super('arena'); }
@@ -12,14 +13,23 @@ export function createBurgerRushGame(container: HTMLElement, onAction: (playerId
     create() {
       this.cameras.main.setBackgroundColor('#171b18');
       this.add.rectangle(450, 250, 860, 4, 0xf4b942);
+      this.ingredient = this.add.circle(500, 220, 14, 0x68a357).setStrokeStyle(3, 0xf7f4ec);
       this.add.text(32, 24, 'BURGER RUSH', { fontFamily: 'Space Grotesk', fontSize: '24px', color: '#f4b942' });
       this.add.text(32, 58, 'La arena está en vivo', { fontFamily: 'DM Mono', fontSize: '14px', color: '#c6cabb' });
     }
 
     update(_time: number, delta: number) {
       this.elapsed += delta;
-      for (const [playerId, sprite] of this.players) sprite.y = 220 + Math.sin(this.elapsed / 250 + sprite.x) * 8;
-      if (this.elapsed > 3000) { this.elapsed = 0; onAction('', 'ATTACK'); }
+      for (const sprite of this.players.values()) sprite.y = 220 + Math.sin(this.elapsed / 250 + sprite.x) * 4;
+    }
+
+    setIngredientPosition(x: number) { this.ingredient?.setX(x); }
+
+    syncPlayers(players: Array<{ id: string; x: number; y: number }>) {
+      for (const player of players) {
+        const sprite = this.players.get(player.id);
+        if (sprite) { sprite.x = player.x; sprite.y = player.y; }
+      }
     }
 
     addPlayer(playerId: string, seat: number, nickname: string) {

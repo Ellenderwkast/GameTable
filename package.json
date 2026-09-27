@@ -7,6 +7,7 @@
     "dev": "concurrently \"npm run dev --workspace @gametable/api\" \"npm run dev --workspace @gametable/web\"",
     "build": "npm run build --workspace @gametable/api && npm run build --workspace @gametable/web",
     "typecheck": "npm run typecheck --workspace @gametable/api && npm run typecheck --workspace @gametable/web",
+    "test": "npm run test --workspace @gametable/api",
     "db:generate": "npm run db:generate --workspace @gametable/api",
     "db:push": "npm run db:push --workspace @gametable/api",
     "db:seed": "npm run db:seed --workspace @gametable/api"

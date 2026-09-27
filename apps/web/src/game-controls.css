@@ -1,0 +1,37 @@
+.secondary { margin-left: 12px; background: #344437; color: #f7f4ec; }
+.secondary:hover { background: #49624c; }
+.controller .secondary { width: 100%; margin: 14px 0; }
+.screen .eyebrow, .screen .join-code { color: var(--tenant-color, #f4b942); }
+.screen .live-dot { border-color: var(--tenant-color, #68a357); }
+.ad-banner { display: block; width: min(100%, 900px); max-height: 180px; object-fit: contain; margin: 16px 0; }
+.billing { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px 24px; max-width: 820px; margin-top: 52px; padding-top: 24px; border-top: 1px solid #3b463c; }
+.billing .eyebrow { grid-column: 1 / -1; }
+.billing label { color: #c6cabb; }
+.billing select { min-width: 300px; padding: 12px; border: 1px solid #68715f; background: #232a24; color: #f7f4ec; font: inherit; }
+.billing .quiet { grid-column: 3; }
+@media (max-width: 700px) { .billing { grid-template-columns: 1fr; } .billing .eyebrow { grid-column: auto; } .billing select { min-width: 0; width: 100%; } .billing .quiet { grid-column: auto; } }
+.brand-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 300px)); align-items: center; gap: 12px 20px; margin-top: 36px; }
+.brand-settings .eyebrow { grid-column: 1 / -1; }
+.brand-settings input { width: 100%; margin: 0; }
+.brand-settings input[type="color"] { width: 54px; height: 44px; padding: 4px; }
+.brand-settings label { display: grid; gap: 8px; color: #c6cabb; }
+.brand-settings button { justify-self: start; }
+.controller-quiz { margin-top: 34px; border-top: 1px solid #3b463c; padding-top: 20px; }
+.controller-quiz > div { margin-top: 24px; }
+.controller-quiz button { width: 100%; margin: 6px 0; background: #2b352d; color: #f7f4ec; text-align: left; }
+.controller-quiz button:disabled { opacity: .55; }
+.restaurant-logo { width: 64px; height: 64px; object-fit: contain; }
+@media (max-width: 650px) { .brand-settings { grid-template-columns: 1fr; } }
+.management { margin-top: 64px; border-top: 1px solid #3b463c; padding-top: 28px; }
+.management-tabs { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0; }
+.management-tabs button { padding: 8px 0; background: transparent; color: #a4ad9b; border-bottom: 2px solid transparent; font: 500 .8rem 'DM Mono'; }
+.management-tabs button.selected { color: #f4b942; border-color: #f4b942; }
+.management-form { display: grid; grid-template-columns: repeat(2, minmax(0, 300px)); gap: 10px 18px; align-items: end; }
+.management-form input { width: 100%; margin: 0; }
+.management-form label { color: #c6cabb; }
+.management-list { max-width: 760px; }
+.management-list > div { display: grid; grid-template-columns: minmax(140px, 1fr) auto; gap: 10px; align-items: center; border-bottom: 1px solid #344037; padding: 14px 0; }
+.management-list span { color: #a4ad9b; font-size: .9rem; }
+.management-actions { grid-column: 1 / -1; display: flex; gap: 12px; }
+.management-actions button { padding: 8px 12px; font-size: .85rem; }
+@media (max-width: 650px) { .management-form { grid-template-columns: 1fr; } .management-list > div { grid-template-columns: 1fr; } }

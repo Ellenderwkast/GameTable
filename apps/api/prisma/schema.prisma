@@ -25,19 +25,48 @@ enum UserRole {
   OPERATOR
 }
 
+enum TenantPlan {
+  FREE_TRIAL
+  STARTER_10
+  GROWTH_25
+  UNLIMITED
+  RESORTS
+}
+
+enum TournamentStatus {
+  DRAFT
+  OPEN
+  RUNNING
+  FINISHED
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
 model Tenant {
   id        String       @id @default(cuid())
   name      String
   slug      String       @unique
-  plan      String       @default("FREE_TRIAL")
+  plan      TenantPlan   @default(FREE_TRIAL)
   status    TenantStatus @default(ACTIVE)
   createdAt DateTime     @default(now())
+  trialEndsAt DateTime   @default(now())
+  stripeCustomerId String? @unique
   devices   Device[]
   matches   Match[]
   players   Player[]
   settings  TenantSettings?
   users     User[]
   scoreEvents ScoreEvent[]
+  tournaments Tournament[]
+  advertisements Advertisement[]
+  questionnaires Questionnaire[]
+  subscriptions Subscription[]
 }
 
 model TenantSettings {
@@ -82,6 +111,9 @@ model Player {
   tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   matches   MatchPlayer[]
   scoreEvents ScoreEvent[]
+  sessions   PlayerSession[]
+  tournamentEntries TournamentEntry[]
+  questionnaireAnswers QuestionnaireAnswer[]
   @@index([tenantId, nickname])
 }
 
@@ -91,6 +123,9 @@ model Match {
   deviceId   String?
   code       String        @unique
   gameKey    String        @default("burger-rush")
+  maxPlayers Int           @default(8)
+  durationSeconds Int      @default(180)
+  stateJson   Json?
   status     MatchStatus   @default(WAITING)
   startedAt  DateTime?
   finishedAt DateTime?
@@ -99,6 +134,7 @@ model Match {
   device     Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
   players    MatchPlayer[]
   scoreEvents ScoreEvent[]
+  sessions   PlayerSession[]
   @@index([tenantId, status])
 }
 
@@ -107,12 +143,27 @@ model MatchPlayer {
   matchId  String
   playerId String
   seat     Int
+  tableNumber Int?
   score    Int      @default(0)
   joinedAt DateTime @default(now())
   match    Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   @@unique([matchId, playerId])
   @@unique([matchId, seat])
+}
+
+model PlayerSession {
+  id         String   @id @default(cuid())
+  matchId    String
+  playerId   String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  @@index([matchId, expiresAt])
+  @@index([playerId, expiresAt])
 }
 
 model ScoreEvent {
@@ -128,4 +179,94 @@ model ScoreEvent {
   player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   @@index([tenantId, createdAt])
   @@index([tenantId, playerId, createdAt])
+}
+
+model Tournament {
+  id        String           @id @default(cuid())
+  tenantId  String
+  name      String
+  status    TournamentStatus @default(DRAFT)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime         @default(now())
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  entries   TournamentEntry[]
+  @@index([tenantId, status])
+}
+
+model TournamentEntry {
+  id           String     @id @default(cuid())
+  tournamentId String
+  playerId     String
+  score        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player       Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId, score])
+}
+
+model Advertisement {
+  id        String   @id @default(cuid())
+  tenantId  String
+  title     String
+  imageUrl  String?
+  targetUrl String?
+  active    Boolean  @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@index([tenantId, active])
+}
+
+model Questionnaire {
+  id        String     @id @default(cuid())
+  tenantId  String
+  title     String
+  active    Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  questions Question[]
+  answers   QuestionnaireAnswer[]
+}
+
+model Question {
+  id              String        @id @default(cuid())
+  questionnaireId String
+  prompt          String
+  optionsJson     Json
+  correctIndex    Int
+  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+  answers         QuestionnaireAnswer[]
+}
+
+model QuestionnaireAnswer {
+  id              String        @id @default(cuid())
+  questionnaireId String
+  questionId      String
+  playerId        String
+  selectedIndex   Int
+  correct         Boolean
+  points          Int           @default(0)
+  createdAt       DateTime      @default(now())
+  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+  question        Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  player          Player        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  @@unique([questionnaireId, questionId, playerId])
+  @@index([questionnaireId, playerId])
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  tenantId         String
+  provider         String
+  externalId       String?
+  status           SubscriptionStatus @default(TRIALING)
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@unique([provider, externalId])
+  @@index([tenantId, status])
 }

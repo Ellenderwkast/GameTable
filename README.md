@@ -36,14 +36,20 @@ Después del seed, acceso demo: `admin@gametable.local` / `GameTableDemo2026!`. 
 
 ## Producción
 
-Configura secretos reales, PostgreSQL administrado, Redis administrado, `PUBLIC_WEB_URL`, `WEB_ORIGIN` con el dominio público, HTTPS, backups, observabilidad, Cloudinary y Wompi/Stripe. Despliega `apps/web` en Vercel usando `vercel.json` y `apps/api` como contenedor en Railway o Render usando `apps/api/Dockerfile`. Cloudflare debe terminar TLS y apuntar al frontend y API con subdominios separados.
+Configura secretos reales, PostgreSQL administrado, Redis administrado, `PUBLIC_WEB_URL`, `PUBLIC_API_URL`, `WEB_ORIGIN` y `VITE_API_URL` con los dominios públicos, HTTPS, backups, observabilidad, Cloudinary y Wompi/Stripe. Despliega `apps/web` en Vercel usando `vercel.json` y `apps/api` como contenedor en Railway o Render usando `apps/api/Dockerfile`; el backend escucha `PORT` si el proveedor la define. Cloudflare debe terminar TLS y apuntar al frontend y API con subdominios separados.
 
 Las credenciales de Cloudinary, Wompi, PostgreSQL, Redis y Cloudflare son secretos del proveedor: se configuran en el panel de despliegue y no se guardan en Git. Los archivos `.env.example` solo documentan sus nombres.
+
+Stripe se integra mediante Checkout, Customer Portal y el endpoint firmado `/api/webhooks/stripe`. Antes de activarlo, crea los cuatro precios recurrentes en Stripe, configura sus Price IDs como `STRIPE_PRICE_*` y registra los eventos `checkout.session.completed`, `customer.subscription.updated` y `customer.subscription.deleted` hacia ese endpoint.
 
 ## Validación
 
 ```bash
 npm run db:generate
+npm run db:migrate:deploy
 npm run typecheck
+npm test
 npm run build
 ```
+
+`db:push` es solo para desarrollo local. Railway/Render debe ejecutar `npm run db:migrate:deploy` antes de arrancar la API.
